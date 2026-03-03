@@ -592,14 +592,17 @@ export default function SignUpPage() {
     setLoading(true)
     setError(null)
 
+    // Debug: Log userId before insert
+    console.log('Creating profile with userId:', userId)
+
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
     const { error: profileError } = await supabase.from('profiles').insert({
-      user_id: userId!,
-      username: username,
+      user_id: userId!,  // make sure this is the id from supabase.auth.signUp response
+      username: username.trim(),
       avatar_url: JSON.stringify(avatarState),
       grade: selectedGrade,
       experience: selectedExperience,
@@ -611,6 +614,7 @@ export default function SignUpPage() {
     })
 
     if (profileError) {
+      console.error('Profile insert error:', JSON.stringify(profileError))
       setError(profileError.message)
       setLoading(false)
       return
