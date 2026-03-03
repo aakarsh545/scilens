@@ -132,7 +132,7 @@ const COLORS = [
   '#63b3ed', '#9f7aea', '#68d391', '#fc8181', '#f6ad55', '#76e4f7', '#f687b3', '#ffd700',
 ]
 
-const ACCESSORIES = ['None', 'Shades', 'Grad Cap', 'Crown', 'Lab Coat', 'Headphones', 'Star', 'Lightning']
+const ACCESSORIES = ['None', 'glasses', 'hat', 'crown', 'lab', 'headphones', 'star', 'lightning']
 
 const GRADE_OPTIONS = [
   { id: 'middle', icon: '📚', title: 'Middle School', subtitle: 'Grade 6–8' },
@@ -234,6 +234,161 @@ export default function SignUpPage() {
 
     return () => clearTimeout(timer)
   }, [username, supabase])
+
+  // Draw accessory function
+  function drawAccessory(ctx: CanvasRenderingContext2D, acc: string, CX: number, CY: number, nucleusR: number, color: string) {
+    ctx.save();
+
+    switch (acc) {
+      case 'glasses': {
+        // Two small round lenses sitting on the eye line, bridge connecting them
+        const eyeY = CY - nucleusR * 0.15;
+        const lensR = nucleusR * 0.28;
+        const lensOffset = nucleusR * 0.38;
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+        ctx.lineWidth = 1.5;
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        // Left lens
+        ctx.beginPath(); ctx.arc(CX - lensOffset, eyeY, lensR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // Right lens
+        ctx.beginPath(); ctx.arc(CX + lensOffset, eyeY, lensR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // Bridge
+        ctx.beginPath(); ctx.moveTo(CX - lensOffset + lensR, eyeY); ctx.lineTo(CX + lensOffset - lensR, eyeY); ctx.stroke();
+        // Arms
+        ctx.beginPath(); ctx.moveTo(CX - lensOffset - lensR, eyeY); ctx.lineTo(CX - nucleusR * 0.95, eyeY - 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(CX + lensOffset + lensR, eyeY); ctx.lineTo(CX + nucleusR * 0.95, eyeY - 2); ctx.stroke();
+        break;
+      }
+      case 'hat': {
+        // Graduation cap sitting ON TOP of the nucleus, not floating
+        const capY = CY - nucleusR * 0.85;
+        const capW = nucleusR * 1.4;
+        const capH = nucleusR * 0.7;
+        const brimW = nucleusR * 1.8;
+        const brimH = nucleusR * 0.2;
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        // Cap body
+        ctx.fillRect(CX - capW / 2, capY - capH, capW, capH);
+        // Brim
+        ctx.fillRect(CX - brimW / 2, capY - brimH, brimW, brimH);
+        // Tassel color band
+        ctx.fillStyle = color;
+        ctx.fillRect(CX - capW / 2, capY - capH, capW, nucleusR * 0.15);
+        break;
+      }
+      case 'crown': {
+        // Crown sitting neatly on top of nucleus
+        const crownBase = CY - nucleusR * 0.8;
+        const crownH = nucleusR * 0.75;
+        const crownW = nucleusR * 1.3;
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        // 5-point crown shape
+        ctx.moveTo(CX - crownW / 2, crownBase);
+        ctx.lineTo(CX - crownW / 2, crownBase - crownH * 0.6);
+        ctx.lineTo(CX - crownW / 4, crownBase - crownH * 0.3);
+        ctx.lineTo(CX, crownBase - crownH);
+        ctx.lineTo(CX + crownW / 4, crownBase - crownH * 0.3);
+        ctx.lineTo(CX + crownW / 2, crownBase - crownH * 0.6);
+        ctx.lineTo(CX + crownW / 2, crownBase);
+        ctx.closePath();
+        ctx.fill();
+        // Gem dots on crown points
+        ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(CX, crownBase - crownH, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ff6b6b'; ctx.beginPath(); ctx.arc(CX - crownW / 4, crownBase - crownH * 0.3, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#a78bfa'; ctx.beginPath(); ctx.arc(CX + crownW / 4, crownBase - crownH * 0.3, 2, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 'lab': {
+        // White lab coat collar + body BELOW the nucleus, properly sized
+        const shirtY = CY + nucleusR * 0.7;
+        const shirtW = nucleusR * 1.6;
+        const shirtH = nucleusR * 1.1;
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        // Shirt body
+        ctx.beginPath();
+        ctx.moveTo(CX - shirtW / 2, shirtY);
+        ctx.lineTo(CX - shirtW / 2, shirtY + shirtH);
+        ctx.lineTo(CX + shirtW / 2, shirtY + shirtH);
+        ctx.lineTo(CX + shirtW / 2, shirtY);
+        // V-neck
+        ctx.lineTo(CX + shirtW * 0.15, shirtY);
+        ctx.lineTo(CX, shirtY + shirtH * 0.3);
+        ctx.lineTo(CX - shirtW * 0.15, shirtY);
+        ctx.closePath();
+        ctx.fill();
+        // Lapels
+        ctx.fillStyle = 'rgba(200,220,255,0.6)';
+        ctx.beginPath(); ctx.moveTo(CX, shirtY + shirtH * 0.3); ctx.lineTo(CX - shirtW * 0.15, shirtY); ctx.lineTo(CX - shirtW * 0.35, shirtY + shirtH * 0.4); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(CX, shirtY + shirtH * 0.3); ctx.lineTo(CX + shirtW * 0.15, shirtY); ctx.lineTo(CX + shirtW * 0.35, shirtY + shirtH * 0.4); ctx.closePath(); ctx.fill();
+        break;
+      }
+      case 'headphones': {
+        // Headphones arc over the top, ear cups on sides at correct height
+        const arcR = nucleusR * 1.05;
+        const cupW = nucleusR * 0.32;
+        const cupH = nucleusR * 0.45;
+        const cupY = CY - nucleusR * 0.1;
+        ctx.strokeStyle = 'rgba(40,40,40,0.95)';
+        ctx.lineWidth = nucleusR * 0.22;
+        ctx.lineCap = 'round';
+        // Arc over top
+        ctx.beginPath();
+        ctx.arc(CX, CY, arcR, Math.PI + 0.55, -0.55);
+        ctx.stroke();
+        // Left ear cup
+        ctx.fillStyle = 'rgba(50,50,50,0.95)';
+        ctx.beginPath(); ctx.ellipse(CX - arcR, cupY, cupW, cupH, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(80,80,80,0.8)';
+        ctx.beginPath(); ctx.ellipse(CX - arcR, cupY, cupW * 0.6, cupH * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+        // Right ear cup
+        ctx.fillStyle = 'rgba(50,50,50,0.95)';
+        ctx.beginPath(); ctx.ellipse(CX + arcR, cupY, cupW, cupH, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(80,80,80,0.8)';
+        ctx.beginPath(); ctx.ellipse(CX + arcR, cupY, cupW * 0.6, cupH * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 'star': {
+        // Clean 5-point star sitting on top of nucleus
+        const starCX = CX;
+        const starCY = CY - nucleusR * 1.15;
+        const outerR = nucleusR * 0.45;
+        const innerR = nucleusR * 0.2;
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const angle = (i * Math.PI) / 5 - Math.PI / 2;
+          const r = i % 2 === 0 ? outerR : innerR;
+          if (i === 0) ctx.moveTo(starCX + r * Math.cos(angle), starCY + r * Math.sin(angle));
+          else ctx.lineTo(starCX + r * Math.cos(angle), starCY + r * Math.sin(angle));
+        }
+        ctx.closePath(); ctx.fill();
+        // Star shine
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.arc(starCX - outerR * 0.2, starCY - outerR * 0.2, outerR * 0.2, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 'lightning': {
+        // Lightning bolt above and to the right of nucleus
+        const boltX = CX + nucleusR * 0.55;
+        const boltY = CY - nucleusR * 1.3;
+        const boltH = nucleusR * 0.9;
+        const boltW = nucleusR * 0.5;
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(boltX + boltW * 0.3, boltY);
+        ctx.lineTo(boltX - boltW * 0.1, boltY + boltH * 0.45);
+        ctx.lineTo(boltX + boltW * 0.15, boltY + boltH * 0.45);
+        ctx.lineTo(boltX - boltW * 0.3, boltY + boltH);
+        ctx.lineTo(boltX + boltW * 0.5, boltY + boltH * 0.5);
+        ctx.lineTo(boltX + boltW * 0.2, boltY + boltH * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
+    }
+    ctx.restore();
+  }
 
   // Atom animation
   const drawAtom = useCallback((timestamp: number) => {
@@ -357,87 +512,9 @@ export default function SignUpPage() {
     ctx.arc(centerX, centerY + 2, 6, 0.2 * Math.PI, 0.8 * Math.PI)
     ctx.stroke()
 
-    // Accessories
-    if (avatarState.accessory === 'Shades') {
-      ctx.fillStyle = '#1a1a1a'
-      ctx.fillRect(centerX - 12, centerY - 5, 24, 8)
-      ctx.strokeStyle = '#333'
-      ctx.lineWidth = 2
-      ctx.strokeRect(centerX - 12, centerY - 5, 24, 8)
-      ctx.fillStyle = 'rgba(255,255,255,0.3)'
-      ctx.fillRect(centerX - 10, centerY - 3, 8, 4)
-    } else if (avatarState.accessory === 'Grad Cap') {
-      ctx.fillStyle = '#1a1a1a'
-      ctx.fillRect(centerX - 16, centerY - 18, 32, 4)
-      ctx.beginPath()
-      ctx.moveTo(centerX - 16, centerY - 18)
-      ctx.lineTo(centerX - 18, centerY - 14)
-      ctx.lineTo(centerX + 18, centerY - 14)
-      ctx.lineTo(centerX + 16, centerY - 18)
-      ctx.fill()
-      ctx.strokeStyle = '#fbbf24'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.moveTo(centerX + 16, centerY - 14)
-      ctx.lineTo(centerX + 18, centerY - 6)
-      ctx.stroke()
-    } else if (avatarState.accessory === 'Crown') {
-      ctx.fillStyle = '#fbbf24'
-      ctx.strokeStyle = '#f59e0b'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.moveTo(centerX - 14, centerY - 10)
-      ctx.lineTo(centerX - 12, centerY - 22)
-      ctx.lineTo(centerX - 6, centerY - 14)
-      ctx.lineTo(centerX, centerY - 24)
-      ctx.lineTo(centerX + 6, centerY - 14)
-      ctx.lineTo(centerX + 12, centerY - 22)
-      ctx.lineTo(centerX + 14, centerY - 10)
-      ctx.closePath()
-      ctx.fill()
-      ctx.stroke()
-    } else if (avatarState.accessory === 'Lab Coat') {
-      ctx.fillStyle = '#ffffff'
-      ctx.strokeStyle = '#e5e5e5'
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(centerX - 10, centerY + 18)
-      ctx.lineTo(centerX - 14, centerY + 32)
-      ctx.lineTo(centerX + 14, centerY + 32)
-      ctx.lineTo(centerX + 10, centerY + 18)
-      ctx.closePath()
-      ctx.fill()
-      ctx.stroke()
-      ctx.fillStyle = '#e5e5e5'
-      ctx.beginPath()
-      ctx.arc(centerX - 4, centerY + 24, 2, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.beginPath()
-      ctx.arc(centerX + 4, centerY + 24, 2, 0, Math.PI * 2)
-      ctx.fill()
-    } else if (avatarState.accessory === 'Headphones') {
-      ctx.strokeStyle = '#1a1a1a'
-      ctx.lineWidth = 4
-      ctx.beginPath()
-      ctx.arc(centerX, centerY - 4, 20, Math.PI, 0)
-      ctx.stroke()
-      ctx.fillStyle = '#1a1a1a'
-      ctx.beginPath()
-      ctx.ellipse(centerX - 20, centerY, 6, 10, 0, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.beginPath()
-      ctx.ellipse(centerX + 20, centerY, 6, 10, 0, 0, Math.PI * 2)
-      ctx.fill()
-    } else if (avatarState.accessory === 'Star') {
-      ctx.font = '20px Arial'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText('⭐', centerX, centerY - 26)
-    } else if (avatarState.accessory === 'Lightning') {
-      ctx.font = '20px Arial'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText('⚡', centerX, centerY - 26)
+    // Draw accessory
+    if (avatarState.accessory !== 'None') {
+      drawAccessory(ctx, avatarState.accessory, centerX, centerY, nucleusRadius, avatarState.color)
     }
 
     animationRef.current = requestAnimationFrame(drawAtom)
@@ -800,19 +877,31 @@ export default function SignUpPage() {
             <div className="mb-8">
               <label className="mb-2 block text-sm font-medium text-slate-300">Accessory</label>
               <div className="grid grid-cols-4 gap-2">
-                {ACCESSORIES.map(acc => (
-                  <button
-                    key={acc}
-                    onClick={() => setAvatarState({ ...avatarState, accessory: acc })}
-                    className={`rounded-lg border py-2 text-xs font-medium transition-colors ${
-                      avatarState.accessory === acc
-                        ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-                        : 'border-slate-700 text-slate-400 hover:bg-slate-800'
-                    }`}
-                  >
-                    {acc}
-                  </button>
-                ))}
+                {ACCESSORIES.map(acc => {
+                  const labels: Record<string, string> = {
+                    'None': 'None',
+                    'glasses': 'Shades',
+                    'hat': 'Cap',
+                    'crown': 'Crown',
+                    'lab': 'Lab Coat',
+                    'headphones': 'Phones',
+                    'star': '⭐',
+                    'lightning': '⚡'
+                  }
+                  return (
+                    <button
+                      key={acc}
+                      onClick={() => setAvatarState({ ...avatarState, accessory: acc })}
+                      className={`rounded-lg border py-2 text-xs font-medium transition-colors ${
+                        avatarState.accessory === acc
+                          ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+                          : 'border-slate-700 text-slate-400 hover:bg-slate-800'
+                      }`}
+                    >
+                      {labels[acc]}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
