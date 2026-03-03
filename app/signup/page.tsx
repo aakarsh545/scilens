@@ -576,16 +576,35 @@ export default function SignUpPage() {
     })
 
     if (error) {
+      // If already registered, try signing them in instead
+      // They may have started signup before but not finished onboarding
+      if (error.message.toLowerCase().includes('already registered') ||
+          error.message.toLowerCase().includes('already been registered')) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        if (signInError) {
+          setError('This email is already registered. Please sign in instead.')
+          setLoading(false)
+          return
+        }
+        setUserId(signInData.user?.id ?? '')
+        setStep(5)
+        setLoading(false)
+        return
+      }
       setError(error.message)
       setLoading(false)
       return
     }
 
-    if (data.user) {
-      setUserId(data.user.id)
-      setStep(5)
+    if (!data.user) {
+      setError('Signup failed. Please try again.')
       setLoading(false)
+      return
     }
+
+    setUserId(data.user.id)
+    setStep(5)
+    setLoading(false)
   }
 
   const handleFinish = async () => {
