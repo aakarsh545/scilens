@@ -98,7 +98,7 @@ export default function HomePage() {
                 Sign In
               </Link>
               <Link
-                href="/login"
+                href="/signup"
                 className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all tracking-wide"
               >
                 Get Started
@@ -127,7 +127,7 @@ export default function HomePage() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/login"
+              href="/signup"
               className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-base font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all hover:scale-105 tracking-wide"
             >
               Start Learning Free
@@ -341,7 +341,7 @@ export default function HomePage() {
             Join thousands of learners mastering physics one lesson at a time
           </p>
           <Link
-            href="/login"
+            href="/signup"
             className="inline-flex rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-10 py-5 text-base font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all hover:scale-105 tracking-wide"
           >
             Get Started Free
