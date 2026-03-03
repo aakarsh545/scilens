@@ -1,3 +1,5 @@
+-- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/fhiofqpvzlnidglwbjxe/sql/new
+
 -- Create profiles table
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
