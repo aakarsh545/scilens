@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import SignOutButton from './SignOutButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,25 +15,55 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  return (
-    <div className="min-h-screen bg-zinc-50 p-8 dark:bg-black">
-      <div className="mx-auto max-w-4xl">
-        <div className="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            Welcome to SciLens
-          </h1>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Logged in as <span className="font-medium text-zinc-900 dark:text-zinc-50">{user.email}</span>
-          </p>
+  // Get user profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
 
-          <form action="/auth/signout" method="post" className="mt-6">
-            <button
-              type="submit"
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Sign Out
-            </button>
-          </form>
+  // If onboarding not completed, redirect to onboarding
+  if (!profile || !profile.onboarding_completed) {
+    redirect('/onboarding')
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950 p-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="rounded-2xl bg-white p-8 shadow-xl">
+          {/* Avatar and Welcome */}
+          <div className="flex items-center gap-6">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-500 text-4xl">
+              {profile.avatar_url}
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Welcome back, {profile.username}!
+              </h1>
+              <p className="text-gray-600">{user.email}</p>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="mt-8 grid grid-cols-3 gap-4">
+            <div className="rounded-xl bg-gray-50 p-6 text-center">
+              <div className="text-3xl font-bold text-gray-900">{profile.xp}</div>
+              <div className="text-sm text-gray-600">XP</div>
+            </div>
+            <div className="rounded-xl bg-gray-50 p-6 text-center">
+              <div className="text-3xl font-bold text-gray-900">{profile.streak}</div>
+              <div className="text-sm text-gray-600">Day Streak</div>
+            </div>
+            <div className="rounded-xl bg-gray-50 p-6 text-center">
+              <div className="text-3xl font-bold text-gray-900">{profile.hearts}</div>
+              <div className="text-sm text-gray-600">Hearts</div>
+            </div>
+          </div>
+
+          {/* Sign Out */}
+          <div className="mt-8 flex justify-end">
+            <SignOutButton />
+          </div>
         </div>
       </div>
     </div>
