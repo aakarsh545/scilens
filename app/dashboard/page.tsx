@@ -224,12 +224,12 @@ export default async function DashboardPage() {
               <p className="text-slate-400 text-sm mb-6">
                 Your personalized curriculum based on your grade and experience is ready.
               </p>
-              <Link
-                href="/learn"
+              <button
+                onClick={(e) => e.preventDefault()}
                 className="inline-block rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all"
               >
                 Start Learning →
-              </Link>
+              </button>
             </div>
 
             {/* Daily Challenge */}
