@@ -292,7 +292,7 @@ export default function HomePage() {
             {/* Step 1 */}
             <div className="relative">
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-xl font-semibold text-white">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xl font-semibold text-white">
                   1
                 </div>
                 <h3 className="text-lg font-semibold text-white">Sign up & customize</h3>
@@ -305,7 +305,7 @@ export default function HomePage() {
             {/* Step 2 */}
             <div className="relative">
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-xl font-semibold text-white">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xl font-semibold text-white">
                   2
                 </div>
                 <h3 className="text-lg font-semibold text-white">Pick your track</h3>
@@ -318,7 +318,7 @@ export default function HomePage() {
             {/* Step 3 */}
             <div className="relative">
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-xl font-semibold text-white">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xl font-semibold text-white">
                   3
                 </div>
                 <h3 className="text-lg font-semibold text-white">Learn & earn</h3>
