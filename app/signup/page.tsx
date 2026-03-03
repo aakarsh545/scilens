@@ -154,14 +154,11 @@ const ELEMENT_LIST = Object.values(ELEMENTS)
 
 export default function SignUpPage() {
   const router = useRouter()
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   const [step, setStep] = useState<Step>(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   // Step 2: Grade
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
@@ -169,7 +166,11 @@ export default function SignUpPage() {
   // Step 3: Experience
   const [selectedExperience, setSelectedExperience] = useState<string | null>(null)
 
-  // Step 4: Avatar
+  // Step 4: Account
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  // Step 5: Avatar
   const [avatarState, setAvatarState] = useState<AvatarState>({
     elementN: 1,
     color: COLORS[5],
@@ -181,14 +182,10 @@ export default function SignUpPage() {
   const animationRef = useRef<number | null>(null)
   const timeRef = useRef(0)
 
-  // Step 5: Username
+  // Step 6: Username
   const [username, setUsername] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<'checking' | 'available' | 'taken' | 'invalid'>('invalid')
   const [usernameError, setUsernameError] = useState<string | null>(null)
-
-  // Step 6: Account
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
 
   const currentElement = ELEMENT_LIST.find((e) => e.atomicNumber === avatarState.elementN) || ELEMENT_LIST[0]
 
@@ -211,6 +208,11 @@ export default function SignUpPage() {
       setUsernameStatus('checking')
       setUsernameError(null)
 
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+
       const { data, error } = await supabase
         .from('profiles')
         .select('username')
@@ -223,17 +225,11 @@ export default function SignUpPage() {
         return
       }
 
-      if (data) {
-        setUsernameStatus('taken')
-        setUsernameError('Username is already taken')
-      } else {
-        setUsernameStatus('available')
-        setUsernameError(null)
-      }
+      setUsernameStatus(data ? 'taken' : 'available')
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [username, supabase])
+  }, [username])
 
   // Draw accessory function
   function drawAccessory(ctx: CanvasRenderingContext2D, acc: string, CX: number, CY: number, nucleusR: number, color: string) {
@@ -521,7 +517,7 @@ export default function SignUpPage() {
   }, [currentElement, avatarState])
 
   useEffect(() => {
-    if (step === 4) {
+    if (step === 5) {
       animationRef.current = requestAnimationFrame(drawAtom)
       return () => {
         if (animationRef.current) {
@@ -537,21 +533,25 @@ export default function SignUpPage() {
         return selectedGrade !== null
       case 3:
         return selectedExperience !== null
-      case 5:
-        return usernameStatus === 'available'
-      case 6:
+      case 4:
         return email.length > 0 && password.length >= 8
+      case 6:
+        return usernameStatus === 'available'
       default:
         return true
     }
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setError(null)
     if (step < 6) {
-      setStep((step + 1) as Step)
+      if (step === 4) {
+        await handleCreateAccount()
+      } else {
+        setStep((step + 1) as Step)
+      }
     } else {
-      handleCreateAccount()
+      await handleFinish()
     }
   }
 
@@ -565,6 +565,11 @@ export default function SignUpPage() {
     setLoading(true)
     setError(null)
 
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -577,27 +582,41 @@ export default function SignUpPage() {
     }
 
     if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        user_id: data.user.id,
-        username: username,
-        avatar_url: JSON.stringify(avatarState),
-        grade: selectedGrade,
-        experience: selectedExperience,
-        onboarding_completed: true,
-        xp: 0,
-        streak: 0,
-        hearts: 5,
-        is_premium: false,
-      })
-
-      if (profileError) {
-        setError(profileError.message)
-        setLoading(false)
-        return
-      }
-
-      router.push('/dashboard')
+      setUserId(data.user.id)
+      setStep(5)
+      setLoading(false)
     }
+  }
+
+  const handleFinish = async () => {
+    setLoading(true)
+    setError(null)
+
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const { error: profileError } = await supabase.from('profiles').insert({
+      user_id: userId!,
+      username: username,
+      avatar_url: JSON.stringify(avatarState),
+      grade: selectedGrade,
+      experience: selectedExperience,
+      onboarding_completed: true,
+      xp: 0,
+      streak: 0,
+      hearts: 5,
+      is_premium: false,
+    })
+
+    if (profileError) {
+      setError(profileError.message)
+      setLoading(false)
+      return
+    }
+
+    router.push('/dashboard')
   }
 
   const getPasswordStrength = (pwd: string) => {
@@ -633,9 +652,6 @@ export default function SignUpPage() {
         <div className="flex min-h-screen items-center justify-center px-4">
           <div className="max-w-2xl text-center">
             <style>{`
-              @keyframes orbit1 { from { transform: rotate(0deg) translateX(60px) rotate(0deg); } to { transform: rotate(360deg) translateX(60px) rotate(-360deg); } }
-              @keyframes orbit2 { from { transform: rotate(120deg) translateX(45px) rotate(-120deg); } to { transform: rotate(480deg) translateX(45px) rotate(-480deg); } }
-              @keyframes orbit3 { from { transform: rotate(240deg) translateX(30px) rotate(-240deg); } to { transform: rotate(600deg) translateX(30px) rotate(-600deg); } }
               @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
               .fade-in { animation: fadeIn 0.6s ease-out forwards; }
               .fade-in-delay { animation: fadeIn 0.6s ease-out 0.5s forwards; opacity: 0; }
@@ -647,7 +663,7 @@ export default function SignUpPage() {
                 <ellipse cx="50" cy="50" rx="35" ry="12" fill="none" stroke="url(#gradient1)" strokeWidth="0.5" opacity="0.3" transform="rotate(-15 50 50)" />
                 <ellipse cx="50" cy="50" rx="30" ry="8" fill="none" stroke="url(#gradient1)" strokeWidth="0.5" opacity="0.3" transform="rotate(30 50 50)" />
                 <ellipse cx="50" cy="50" rx="25" ry="6" fill="none" stroke="url(#gradient1)" strokeWidth="0.5" opacity="0.3" transform="rotate(75 50 50)" />
-                <circle cx="15" cy="35" r="3" fill="url(#gradient1)" className="animate-pulse" style={{ animationDuration: '2s' }} />
+                <circle cx="15" cy="35" r="3" fill="url(#gradient2)" className="animate-pulse" style={{ animationDuration: '2s' }} />
                 <circle cx="72" cy="55" r="3" fill="url(#gradient1)" className="animate-pulse" style={{ animationDuration: '2.5s' }} />
                 <circle cx="62" cy="25" r="3" fill="url(#gradient1)" className="animate-pulse" style={{ animationDuration: '3s' }} />
                 <circle cx="50" cy="50" r="10" fill="url(#gradient2)" />
@@ -773,8 +789,102 @@ export default function SignUpPage() {
         </div>
       )}
 
-      {/* Step 4: Atom Avatar */}
+      {/* Step 4: Create Account */}
       {step === 4 && (
+        <div className="min-h-screen flex items-center justify-center px-4 py-24">
+          <div className="max-w-md w-full">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-semibold text-white mb-2 tracking-tight">
+                Almost there!
+              </h2>
+              <p className="text-slate-400">Create your account to continue</p>
+            </div>
+
+            {error && (
+              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-300">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="Min. 8 characters"
+                />
+                {password.length > 0 && (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 rounded-full bg-slate-700 overflow-hidden">
+                      <div
+                        className={`h-full ${password.length < 8 ? 'w-1/3 bg-red-400' : password.length < 12 ? 'w-2/3 bg-yellow-400' : 'w-full bg-green-400'}`}
+                      />
+                    </div>
+                    <span className={`text-xs ${getPasswordStrength(password).color}`}>
+                      {getPasswordStrength(password).label}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleContinue}
+                disabled={loading || !canContinue()}
+                className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  </div>
+                ) : (
+                  'Continue'
+                )}
+              </button>
+            </div>
+
+            <div className="mt-6 flex gap-4">
+              <button
+                onClick={handleBack}
+                className="px-6 py-3 text-slate-400 hover:text-white transition-colors"
+              >
+                Back
+              </button>
+              <Link
+                href="/login"
+                className="ml-auto px-6 py-3 text-slate-400 hover:text-white transition-colors"
+              >
+                Already have an account?
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 5: Atom Avatar */}
+      {step === 5 && (
         <div className="min-h-screen flex items-center justify-center px-4 py-24">
           <div className="max-w-2xl w-full">
             <div className="text-center mb-8">
@@ -923,8 +1033,8 @@ export default function SignUpPage() {
         </div>
       )}
 
-      {/* Step 5: Username */}
-      {step === 5 && (
+      {/* Step 6: Username + Finish */}
+      {step === 6 && (
         <div className="min-h-screen flex items-center justify-center px-4 py-24">
           <div className="max-w-md w-full">
             <div className="text-center mb-12">
@@ -977,103 +1087,17 @@ export default function SignUpPage() {
               </button>
               <button
                 onClick={handleContinue}
-                disabled={!canContinue()}
-                className="ml-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 6: Create Account */}
-      {step === 6 && (
-        <div className="min-h-screen flex items-center justify-center px-4 py-24">
-          <div className="max-w-md w-full">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-semibold text-white mb-2 tracking-tight">
-                Almost there!
-              </h2>
-            </div>
-
-            {error && (
-              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-300">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="you@example.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-300">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Min. 8 characters"
-                />
-                {password.length > 0 && (
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 rounded-full bg-slate-700 overflow-hidden">
-                      <div
-                        className={`h-full ${password.length < 8 ? 'w-1/3 bg-red-400' : password.length < 12 ? 'w-2/3 bg-yellow-400' : 'w-full bg-green-400'}`}
-                      />
-                    </div>
-                    <span className={`text-xs ${getPasswordStrength(password).color}`}>
-                      {getPasswordStrength(password).label}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={handleCreateAccount}
                 disabled={loading || !canContinue()}
-                className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                className="ml-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-500 hover:to-indigo-500 transition-all disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   </div>
                 ) : (
-                  'Create Account & Start Learning'
+                  'Start Learning →'
                 )}
               </button>
-            </div>
-
-            <div className="mt-6 flex gap-4">
-              <button
-                onClick={handleBack}
-                className="px-6 py-3 text-slate-400 hover:text-white transition-colors"
-              >
-                Back
-              </button>
-              <Link
-                href="/login"
-                className="ml-auto px-6 py-3 text-slate-400 hover:text-white transition-colors"
-              >
-                Already have an account?
-              </Link>
             </div>
           </div>
         </div>
